@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -27,6 +28,8 @@ public class Main implements ApplicationListener {
      FitViewport viewport;
      Sprite bucketSprite;
      Array<Sprite> wallSprites;
+    Rectangle bucketRectangle;
+    Rectangle dropRectangle;
 
      float commonSize = 0.5f;
 
@@ -45,7 +48,10 @@ public class Main implements ApplicationListener {
 
        wallSprites = new Array<>();
 
-       createWalls();
+        bucketRectangle = new Rectangle();
+        dropRectangle = new Rectangle();
+
+        createWalls();
     }
 
     @Override
@@ -64,18 +70,53 @@ public class Main implements ApplicationListener {
         float worldWidth = viewport.getWorldWidth();
 
         // Store the bucket size for brevity
+        float bucketHeight = bucketSprite.getHeight();
         float bucketWidth = bucketSprite.getWidth();
 
         // Subtract the bucket width
         bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, worldWidth - bucketWidth));
+
+        /*
+        USANDO OS DADOS DO BALDE PARA CRIAR SEU COLISOR
+         */
+        bucketRectangle.set(bucketSprite.getX(), bucketSprite.getY(), bucketWidth, bucketHeight);
+
+        for (int i = wallSprites.size - 1; i >= 0; i--) {
+            Sprite parede = wallSprites.get(i);
+            float paredeWidth = parede.getWidth();
+            float paredeHeight = parede.getHeight();
+            /*
+                USANDO OS DADOS DA PAREDE PARA CRIAR SEU COLISOR
+            */
+            dropRectangle.set(parede.getX(), parede.getY(), paredeWidth, paredeHeight);
+
+            /*
+                AQUI ABAIXO ACONTECE A COLISÃO
+             */
+            if (bucketRectangle.overlaps(dropRectangle)) {
+                wallSprites.removeIndex(i);
+            }
+        }
     }
 
     private void input() {
-        float speed = 4f;
+        float speed = 10f;
         float delta = Gdx.graphics.getDeltaTime();
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.UP)){
+            bucketSprite.translateY(speed * delta);
+        }
 
         if(Gdx.input.isKeyJustPressed(Input.Keys.RIGHT)){
            bucketSprite.translateX(speed * delta);
+        }
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.DOWN)){
+            bucketSprite.translateY(-speed * delta);
+        }
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.LEFT)){
+            bucketSprite.translateX(-speed * delta);
         }
     }
 
@@ -84,6 +125,10 @@ public class Main implements ApplicationListener {
         var wallTexture = new Texture("wall.png");
 
         var alturaDoViewPort = viewport.getWorldHeight();
+
+          /*
+            BLOCOS DE PRIMEIRA PAREDE
+         */
 
         var firstWall = new Sprite(wallTexture);
         firstWall.setSize(commonSize,commonSize);
@@ -102,8 +147,8 @@ public class Main implements ApplicationListener {
             wallSprites.add(newWall);
         }
 
-        /*
-            PAREDES ACIMA DA SEGUNDA PAREDE
+         /*
+            BLOCOS DE SEGUNDA PAREDE
          */
 
         var secondWall = new Sprite(wallTexture);
@@ -126,26 +171,8 @@ public class Main implements ApplicationListener {
         secondWall5.setSize(commonSize,commonSize);
         secondWall5.setPosition(3,(secondWall4.getY() + secondWall5.getHeight()) - 0.1f);
 
-//        var secondWall2 = new Sprite(wallTexture);
-//        firstWall.setSize(commonSize,commonSize);
-//        firstWall.setPosition(3,0.6f);
-//
-//        var secondWall3 = new Sprite(wallTexture);
-//        firstWall.setSize(commonSize,commonSize);
-//        firstWall.setPosition(3,0.6f);
-//
-//        var secondWall4 = new Sprite(wallTexture);
-//        firstWall.setSize(commonSize,commonSize);
-//        firstWall.setPosition(3,0.6f);
-//
-//        var secondWall5 = new Sprite(wallTexture);
-//        firstWall.setSize(commonSize,commonSize);
-//        firstWall.setPosition(3,0.6f);
-
         wallSprites.add(secondWall,secondWall2,secondWall3,secondWall4);
         wallSprites.add(secondWall5);
-
-
     }
 
     private void draw(){
